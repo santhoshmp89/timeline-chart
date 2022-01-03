@@ -4,7 +4,7 @@ import * as d3 from "d3";
 const data = [
   {
     name: "Alerts & Events",
-    metrics: [
+    values: [
       { date: new Date("Tue Dec 21 2021 10:00:00 GMT+0530") },
       { date: new Date("Tue Dec 21 2021 20:00:00 GMT+0530") },
       { date: new Date("Tue Dec 21 2021 08:00:00 GMT+0530") },
@@ -13,7 +13,7 @@ const data = [
   },
   {
     name: "VPN Connection",
-    metrics: [
+    values: [
       { date: new Date("Tue Dec 21 2021 11:00:00 GMT+0530") },
       { date: new Date("Tue Dec 21 2021 23:00:00 GMT+0530") },
       { date: new Date("Tue Dec 21 2021 18:00:00 GMT+0530") },
@@ -22,7 +22,7 @@ const data = [
   },
   {
     name: "Online",
-    metrics: [
+    values: [
       { date: new Date("Tue Dec 21 2021 09:00:00 GMT+0530") },
       { date: new Date("Tue Dec 21 2021 01:00:00 GMT+0530") },
       { date: new Date("Tue Dec 21 2021 03:00:00 GMT+0530") },
@@ -31,7 +31,7 @@ const data = [
   }
 ];
 
-const getYaxisLabel = ["Alerts", "VPN Connection", "Online"];
+const getYaxisLabel = ["Alerts & Events", "VPN Connection", "Online"];
 
 const Margin = {
   top: 20,
@@ -87,60 +87,80 @@ const TimelineChart = () => {
     .domain(getYaxisLabel)
     .range([0, innerHeight])
     .padding(`0.${getYaxisLabel.length + 1}`);
+
   console.log(innerHeight);
+
   React.useEffect(() => {
-    const yAxisGenerator = d3
-      .axisLeft()
-      .scale(yScale)
-      .tickPadding([10])
-      .tickSizeInner([10])
-      .tickSize(0);
+    const yAxisGenerator = d3.axisLeft().scale(yScale).tickSize(0);
     d3.select(yAxis.current).call(yAxisGenerator);
   }, [data]);
+
+  const plotValues = () => {
+    const values = [];
+
+    for (const item of data) {
+      for (const metric of item.values) {
+        values.push(
+          <rect
+            fill="black"
+            x={xScale(metric.date)}
+            y={yScale(item.name)}
+            width="3"
+            height="3"
+          />
+        );
+      }
+    }
+
+    return values;
+  };
 
   return (
     <svg ref={svgRef} width={SVG_WIDTH} height={SVG_HEIGHT}>
       <g transform={`translate(${Margin.left}, ${Margin.right})`}>
         <g ref={yAxis} transform={`translate(0, 0)`}></g>
-        {xScale
-          .nice()
-          .ticks(24)
-          .map((tickerValue, i) => {
-            const strokeColor = i === 0 ? "white" : "#ccc";
-            return (
-              <g
-                key={tickerValue}
-                transform={`translate(${xScale(tickerValue)}, 0)`}
-              >
-                <line
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2={innerHeight}
-                  stroke={strokeColor}
-                />
-                {i % 4 === 0 && (
-                  <text
-                    x="0"
-                    y={innerHeight + 10}
-                    textAnchor="middle"
-                    style={{ fontSize: 9 }}
-                  >
-                    {multiFormat(tickerValue)}
-                  </text>
-                )}
-              </g>
-            );
-          })}
-        <g>
-          <line
-            x1={-5}
-            y1={innerHeight - 5}
-            x2={innerWidth}
-            y2={innerHeight - 5}
-            stroke="black"
-          />
+        <g className="lineAndLabel">
+          {xScale
+            .nice()
+            .ticks(24)
+            .map((tickerValue, i) => {
+              const strokeColor = i === 0 ? "white" : "#ccc";
+              return (
+                <g
+                  key={tickerValue}
+                  transform={`translate(${xScale(tickerValue)}, 0)`}
+                >
+                  <line
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2={innerHeight}
+                    stroke={strokeColor}
+                  />
+                  {i % 4 === 0 && (
+                    <text
+                      x="0"
+                      y={innerHeight + 10}
+                      textAnchor="middle"
+                      style={{ fontSize: 9 }}
+                    >
+                      {multiFormat(tickerValue)}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          <g>
+            <line
+              x1={-5}
+              y1={innerHeight - 5}
+              x2={innerWidth}
+              y2={innerHeight - 5}
+              stroke="black"
+            />
+          </g>
         </g>
+        <g className="values">{plotValues()}</g>
       </g>
     </svg>
   );
